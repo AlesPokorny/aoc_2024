@@ -6,13 +6,14 @@ mod q2;
 mod q3;
 mod q4;
 mod q5;
+mod q6;
 mod utilities;
 
-use crate::q5::solution;
+use crate::q6::solution;
 use crate::utilities::read_lines;
 
 fn main() {
-    let filename = "./data/q5.txt";
+    let filename = "./data/q6.txt";
     let lines = read_lines(filename);
 
     solution(lines)
