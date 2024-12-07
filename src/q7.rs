@@ -2,6 +2,20 @@ use itertools::iproduct;
 use rayon::prelude::*;
 use std::time::Instant;
 
+fn split_to_target_and_values(line: &str) -> (usize, Vec<usize>) {
+    let all_values: Vec<Vec<usize>> = line
+        .split(": ")
+        .map(|first_split| {
+            first_split
+                .split(" ")
+                .map(|second_split| second_split.parse::<usize>().unwrap())
+                .collect::<Vec<usize>>()
+        })
+        .collect();
+
+    (all_values[0][0], all_values[1].clone())
+}
+
 fn get_all_combinations(n_values: usize, operators: &[u8]) -> Vec<Vec<u8>> {
     let mut combinations: Vec<Vec<u8>> = vec![vec![]];
 
@@ -68,18 +82,7 @@ fn part_1(lines: &[String]) -> i64 {
     lines
         .into_par_iter()
         .map(|line| {
-            let all_values: Vec<Vec<usize>> = line
-                .split(": ")
-                .map(|first_split| {
-                    first_split
-                        .split(" ")
-                        .map(|second_split| second_split.parse::<usize>().unwrap())
-                        .collect::<Vec<usize>>()
-                })
-                .collect();
-
-            let target_value = all_values[0][0];
-            let values = all_values[1].clone();
+            let (target_value, values) = split_to_target_and_values(line);
 
             if !check_if_between_bounds(&values, target_value) {
                 return 0;
@@ -101,18 +104,7 @@ fn part_2(lines: &[String]) -> i64 {
     lines
         .into_par_iter()
         .map(|line| {
-            let all_values: Vec<Vec<usize>> = line
-                .split(": ")
-                .map(|first_split| {
-                    first_split
-                        .split(" ")
-                        .map(|second_split| second_split.parse::<usize>().unwrap())
-                        .collect::<Vec<usize>>()
-                })
-                .collect();
-
-            let target_value = all_values[0][0];
-            let values = all_values[1].clone();
+            let (target_value, values) = split_to_target_and_values(line);
 
             if is_possible(&operators, values, target_value) {
                 return target_value;
