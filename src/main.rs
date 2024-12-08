@@ -8,13 +8,14 @@ mod q4;
 mod q5;
 mod q6;
 mod q7;
+mod q8;
 mod utilities;
 
-use crate::q7::solution;
+use crate::q8::solution;
 use crate::utilities::read_lines;
 
 fn main() {
-    let filename = "./data/q7.txt";
+    let filename = "./data/q8.txt";
     let lines = read_lines(filename);
 
     solution(lines)
