@@ -1,5 +1,4 @@
-use lru::LruCache;
-use std::num::NonZeroUsize;
+use std::collections::HashMap;
 use std::time::Instant;
 
 fn parse_data(lines: &[String]) -> Vec<usize> {
@@ -10,7 +9,7 @@ fn parse_data(lines: &[String]) -> Vec<usize> {
 }
 
 fn let_magic_happen(
-    cache: &mut LruCache<(usize, usize), usize>,
+    cache: &mut HashMap<(usize, usize), usize>,
     stone: usize,
     iteration: usize,
     max_iteration: usize,
@@ -43,14 +42,13 @@ fn let_magic_happen(
             answer = let_magic_happen(cache, stone * 2024, iteration + 1, max_iteration);
         }
     }
-    cache.put((stone, iterations_left), answer);
+    cache.insert((stone, iterations_left), answer);
     answer
 }
 
 fn part_1(lines: &[String]) -> i64 {
     let stones = parse_data(lines);
-    let mut cache: LruCache<(usize, usize), usize> =
-        LruCache::new(NonZeroUsize::new(100000).unwrap());
+    let mut cache: HashMap<(usize, usize), usize> = HashMap::new();
     let mut answer = 0;
     for stone in stones {
         answer += let_magic_happen(&mut cache, stone, 0, 25);
@@ -62,8 +60,7 @@ fn part_1(lines: &[String]) -> i64 {
 fn part_2(lines: &[String]) -> i64 {
     let stones = parse_data(lines);
 
-    let mut cache: LruCache<(usize, usize), usize> =
-        LruCache::new(NonZeroUsize::new(1_000_000_000).unwrap());
+    let mut cache: HashMap<(usize, usize), usize> = HashMap::new();
 
     let mut answer = 0;
     for stone in stones {
