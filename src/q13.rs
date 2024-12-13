@@ -171,6 +171,6 @@ mod q13_tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part_2(&get_lines()), 1206);
+        assert_eq!(part_2(&get_lines()), 875318608908);
     }
 }
