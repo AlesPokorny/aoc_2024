@@ -1,3 +1,6 @@
 /target
 
 *.txt
+pictures/
+
+.DS_Store
