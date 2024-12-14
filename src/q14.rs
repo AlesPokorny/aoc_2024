@@ -151,14 +151,16 @@ fn part_2(lines: &[String]) -> i64 {
 
     let max_x = 100;
     let max_y = 102;
+    let mut n_seconds = 1;
 
-    for n_seconds in 1..=150000 {
+    loop {
         let moved_robots: Vec<Robot> = robots
             .clone()
             .into_iter()
             .map(|mut robot| robot.position_in_n_seconds(n_seconds, max_x, max_y))
             .collect();
         generate_image(&moved_robots, max_x, max_y, n_seconds);
+        n_seconds += 1;
 
         match robots_map.insert(moved_robots) {
             true => continue,
