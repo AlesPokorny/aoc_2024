@@ -1,12 +1,12 @@
-
 use std::time::Instant;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 struct Point {
     x: usize,
     y: usize,
 }
 
+#[derive(PartialEq, Eq)]
 enum Direction {
     Up,
     Right,
@@ -14,26 +14,27 @@ enum Direction {
     Left,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Entity {
     Box,
     Wall,
     Robot,
     EmptySpace,
+    BoxLeft,
+    BoxRight,
 }
 
 struct Map {
-    size: (usize, usize),
     map: Vec<Vec<Entity>>,
     robot_position: Point,
 }
 
 impl Point {
-    fn new(x: usize, y:usize) -> Self {
+    fn new(x: usize, y: usize) -> Self {
         Self { x, y }
     }
 
-    fn move_direction(&self, direction: &Direction) -> Self {
+    fn move_direction(self, direction: &Direction) -> Self {
         match direction {
             Direction::Up => Self::new(self.x, self.y - 1),
             Direction::Right => Self::new(self.x + 1, self.y),
@@ -41,11 +42,22 @@ impl Point {
             Direction::Left => Self::new(self.x - 1, self.y),
         }
     }
+
+    fn to_left(self) -> Self {
+        Self::new(self.x - 1, self.y)
+    }
+
+    fn to_right(self) -> Self {
+        Self::new(self.x + 1, self.y)
+    }
 }
 
 impl Map {
-    fn new(size: (usize, usize), map: Vec<Vec<Entity>>, robot_position: Point) -> Self {
-        Self { size, map, robot_position }
+    fn new(map: Vec<Vec<Entity>>, robot_position: Point) -> Self {
+        Self {
+            map,
+            robot_position,
+        }
     }
 
     fn print(&self) {
@@ -56,10 +68,12 @@ impl Map {
                     Entity::Wall => '#',
                     Entity::Robot => '@',
                     Entity::EmptySpace => '.',
+                    Entity::BoxLeft => '[',
+                    Entity::BoxRight => ']',
                 };
                 print!("{}", char_to_print);
             }
-            print!("\n");
+            println!();
         }
     }
 
@@ -71,56 +85,50 @@ impl Map {
     }
 
     fn move_box(&mut self, old_point: &Point, new_point: &Point) {
-        self.map[new_point.y][new_point.x] = Entity::Box;
-        self.map[self.robot_position.y][self.robot_position.x] = Entity::EmptySpace;
+        self.map[new_point.y][new_point.x] = self.map[old_point.y][old_point.x];
+        self.map[old_point.y][old_point.x] = Entity::EmptySpace;
     }
 
     fn move_boxes(&mut self, point: &Point, direction: &Direction) -> bool {
         let new_point = point.move_direction(direction);
 
         match self.get_entity_at_point(&new_point) {
-            Entity::Box => {
+            Entity::Box | Entity::BoxLeft | Entity::BoxRight => {
                 if self.move_boxes(&new_point, direction) {
                     self.move_box(point, &new_point);
                     return true;
                 }
-                return false;
-            },
-            Entity::Wall => {
                 false
-            },
+            }
+            Entity::Wall => false,
             Entity::Robot => {
                 panic!("Are they multiplying");
-            },
+            }
             Entity::EmptySpace => {
                 self.move_box(point, &new_point);
                 true
-            },
+            }
         }
-
-
     }
 
     fn bust_a_move(&mut self, direction: Direction) {
         let new_point = self.robot_position.move_direction(&direction);
 
         match self.get_entity_at_point(&new_point) {
-            &Entity::Box => {
+            Entity::Box => {
                 if self.move_boxes(&new_point, &direction) {
                     self.move_robot(&new_point);
                 }
-            },
-            &Entity::Wall => {
-                return
-            },
-            &Entity::Robot => {
+            }
+            Entity::Wall => (),
+            Entity::Robot => {
                 panic!("Robotception")
-            },
-            &Entity::EmptySpace => {
+            }
+            Entity::EmptySpace => {
                 self.move_robot(&new_point);
-            },
+            }
+            _ => panic!(),
         }
-
     }
 
     fn get_entity_at_point(&self, point: &Point) -> &Entity {
@@ -151,26 +159,150 @@ impl Map {
                     Entity::Robot => {
                         new_row.push(Entity::Robot);
                         new_row.push(Entity::EmptySpace);
-                    },
+                    }
                     Entity::Box => {
-                        new_row.push(Entity::Box);
-                        new_row.push(Entity::Box);
-                    },
+                        new_row.push(Entity::BoxLeft);
+                        new_row.push(Entity::BoxRight);
+                    }
                     Entity::Wall => {
                         new_row.push(Entity::Wall);
                         new_row.push(Entity::Wall);
-                    },
+                    }
                     Entity::EmptySpace => {
                         new_row.push(Entity::EmptySpace);
                         new_row.push(Entity::EmptySpace);
-                    },
+                    }
+                    _ => panic!(),
                 }
             }
             expanded_map.push(new_row);
         }
         self.map = expanded_map;
         self.robot_position = Point::new(self.robot_position.x * 2, self.robot_position.y)
+    }
 
+    fn bust_a_horizontal_move(&mut self, direction: Direction) {
+        if ![Direction::Left, Direction::Right].contains(&direction) {
+            panic!();
+        }
+        let new_point = self.robot_position.move_direction(&direction);
+
+        match self.get_entity_at_point(&new_point) {
+            Entity::BoxLeft | Entity::BoxRight => {
+                if self.move_boxes(&new_point, &direction) {
+                    self.move_robot(&new_point);
+                }
+            }
+            &Entity::Wall => (),
+            &Entity::Robot => {
+                panic!("Robotception")
+            }
+            &Entity::EmptySpace => {
+                self.move_robot(&new_point);
+            }
+            _ => panic!(),
+        }
+    }
+
+    fn bust_a_vertical_move(&mut self, direction: Direction) {
+        let old_point = self.robot_position;
+        let new_point = self.robot_position.move_direction(&direction);
+
+        match self.get_entity_at_point(&new_point) {
+            Entity::Box => panic!(),
+            Entity::Wall => (),
+            Entity::Robot => panic!("Robotception"),
+            Entity::EmptySpace => self.move_robot(&new_point),
+            Entity::BoxLeft => {
+                if self.can_move_big_box(&new_point, &direction, &Entity::BoxLeft) {
+                    self.make_big_moves(&new_point, &direction, &Entity::BoxLeft);
+                    self.move_robot(&new_point);
+                }
+            }
+            Entity::BoxRight => {
+                if self.can_move_big_box(&new_point, &direction, &Entity::BoxRight) {
+                    self.make_big_moves(&new_point, &direction, &Entity::BoxRight);
+                    self.move_robot(&new_point);
+                }
+            }
+        }
+    }
+
+    fn can_move_big_box(&self, point: &Point, direction: &Direction, entity: &Entity) -> bool {
+        let one_new_point = point.move_direction(direction);
+        let other_new_point = match entity {
+            Entity::BoxLeft => one_new_point.to_right(),
+            Entity::BoxRight => one_new_point.to_left(),
+            _ => panic!(),
+        };
+
+        let mut can_move = true;
+
+        for new_point in [one_new_point, other_new_point] {
+            match self.get_entity_at_point(&new_point) {
+                Entity::Box => panic!(),
+                Entity::Wall => return false,
+                Entity::Robot => panic!("Robotception"),
+                Entity::EmptySpace => can_move &= true,
+                Entity::BoxLeft => {
+                    can_move &= self.can_move_big_box(&new_point, direction, &Entity::BoxLeft)
+                }
+                Entity::BoxRight => {
+                    can_move &= self.can_move_big_box(&new_point, direction, &Entity::BoxRight)
+                }
+            }
+        }
+        can_move
+    }
+
+    fn make_big_moves(&mut self, point: &Point, direction: &Direction, entity: &Entity) {
+        let one_new_point = point.move_direction(direction);
+        let other_new_point = match entity {
+            Entity::BoxLeft => one_new_point.to_right(),
+            Entity::BoxRight => one_new_point.to_left(),
+            _ => panic!(),
+        };
+        for new_point in [one_new_point, other_new_point] {
+            match self.get_entity_at_point(&new_point) {
+                Entity::Box => panic!(),
+                Entity::Wall => panic!("I thought we could do it"),
+                Entity::Robot => panic!("Robotception"),
+                Entity::EmptySpace => continue,
+                Entity::BoxLeft => self.make_big_moves(&new_point, direction, &Entity::BoxLeft),
+                Entity::BoxRight => self.make_big_moves(&new_point, direction, &Entity::BoxRight),
+            }
+        }
+        self.move_big_box(point, &one_new_point, entity);
+    }
+
+    fn move_big_box(&mut self, old_point: &Point, new_point: &Point, entity: &Entity) {
+        self.map[new_point.y][new_point.x] = self.map[old_point.y][old_point.x];
+        self.map[old_point.y][old_point.x] = Entity::EmptySpace;
+        if entity == &Entity::BoxLeft {
+            let new_point = new_point.to_right();
+            let old_point = old_point.to_right();
+            self.map[new_point.y][new_point.x] = self.map[old_point.y][old_point.x];
+            self.map[old_point.y][old_point.x] = Entity::EmptySpace;
+        } else {
+            let new_point = new_point.to_left();
+            let old_point = old_point.to_left();
+            self.map[new_point.y][new_point.x] = self.map[old_point.y][old_point.x];
+            self.map[old_point.y][old_point.x] = Entity::EmptySpace;
+        }
+    }
+
+    fn count_big_boxes(&self) -> usize {
+        let mut result = 0_usize;
+        for (y, row) in self.map.iter().enumerate() {
+            for (x, entity) in row.iter().enumerate() {
+                match entity {
+                    Entity::BoxLeft => result += y * 100 + x,
+                    _ => continue,
+                }
+            }
+        }
+
+        result
     }
 }
 
@@ -183,7 +315,7 @@ fn parse_data(lines: &[String]) -> (Map, Vec<Direction>) {
     let mut directions: Vec<Direction> = Vec::new();
 
     for (y, row) in lines.iter().enumerate() {
-        if row == "" {
+        if row.is_empty() {
             map_part = false;
             continue;
         }
@@ -197,7 +329,7 @@ fn parse_data(lines: &[String]) -> (Map, Vec<Direction>) {
                     '@' => {
                         robot_position = Point::new(x, y);
                         Entity::Robot
-                    },
+                    }
                     _ => panic!("AAAAAA"),
                 };
                 map_row.push(entity);
@@ -218,13 +350,10 @@ fn parse_data(lines: &[String]) -> (Map, Vec<Direction>) {
         }
     }
 
-    let map = Map::new((max_x, max_y), map_vec, robot_position);
+    let map = Map::new(map_vec, robot_position);
 
     (map, directions)
-
-
 }
-
 
 fn part_1(lines: &[String]) -> i64 {
     let (mut map, directions) = parse_data(lines);
@@ -233,24 +362,22 @@ fn part_1(lines: &[String]) -> i64 {
         map.bust_a_move(direction);
     }
 
-
     map.count_boxes() as i64
 }
 
 fn part_2(lines: &[String]) -> i64 {
     let (mut map, directions) = parse_data(lines);
+
     map.expand_map();
 
-    let a = map.map[map.robot_position.y][map.robot_position.x];
-
     for direction in directions {
-        map.bust_a_move(direction);
+        match direction {
+            Direction::Left | Direction::Right => map.bust_a_horizontal_move(direction),
+            _ => map.bust_a_vertical_move(direction),
+        }
     }
 
-    map.print();
-
-
-    map.count_boxes() as i64
+    map.count_big_boxes() as i64
 }
 
 pub fn solution(lines: Vec<String>) {
@@ -281,7 +408,7 @@ mod q15_tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(part_1(&get_lines()), 12);
+        assert_eq!(part_1(&get_lines()), 10092);
     }
 
     #[test]
