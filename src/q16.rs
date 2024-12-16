@@ -287,11 +287,11 @@ mod q16_tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(part_1(&get_lines()), 7036);
+        assert_eq!(part_1(&get_lines()), 11048);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part_2(&get_lines()), 0);
+        assert_eq!(part_2(&get_lines()), 64);
     }
 }
