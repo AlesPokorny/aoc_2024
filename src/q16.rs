@@ -2,7 +2,6 @@ use std::collections::{HashMap, VecDeque};
 use std::{collections::HashSet, hash::Hash, time::Instant};
 
 use itertools::Itertools;
-// use pathfinding::directed::yen;
 
 const ALL_DIRECTIONS: [Direction; 4] = [
     Direction::Up,
