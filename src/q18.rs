@@ -1,4 +1,4 @@
-use pathfinding::prelude::dijkstra;
+use pathfinding::prelude::bfs;
 use std::time::Instant;
 
 const ALL_DIRECTIONS: [Direction; 4] = [
@@ -87,10 +87,10 @@ impl Map {
         output
     }
 
-    fn find_shortest_path(&self) -> Option<(Vec<Point>, i32)> {
-        dijkstra(
+    fn find_shortest_path(&self) -> Option<Vec<Point>> {
+        bfs(
             &Point::new(0, 0),
-            |point| self.get_safe_neighbors(point).into_iter().map(|x| (x, 1)),
+            |point| self.get_safe_neighbors(point),
             |&point| Point::new(self.size, self.size) == point,
         )
     }
@@ -132,7 +132,7 @@ fn part_1(lines: &[String]) -> usize {
 
     let result = map.find_shortest_path();
 
-    result.unwrap().0.len() - 1
+    result.unwrap().len() - 1
 }
 
 fn part_2(lines: &[String]) -> Point {
