@@ -35,7 +35,6 @@ enum Field {
     Corrupted,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum Direction {
     Up,
     Right,
@@ -111,16 +110,9 @@ fn parse_data(lines: &[String]) -> Vec<Point> {
 }
 
 fn create_map(size: usize) -> Map {
-    let mut map: Vec<Vec<Field>> = Vec::new();
-
-    for _ in 0..=size {
-        let mut row: Vec<Field> = Vec::new();
-        for _ in 0..=size {
-            row.push(Field::Safe);
-        }
-        map.push(row);
-    }
-
+    let map = (0..=size)
+        .map(|_| (0..=size).map(|_| Field::Safe).collect())
+        .collect();
     Map::new(map, size)
 }
 
@@ -144,9 +136,8 @@ fn part_2(lines: &[String]) -> Point {
     loop {
         let last_point = *falling_memory.last().unwrap();
         map.let_memory_fall(&mut falling_memory, 1);
-        match map.find_shortest_path() {
-            Some(_) => (),
-            None => return last_point,
+        if map.find_shortest_path().is_none() {
+            return last_point;
         }
     }
 }
