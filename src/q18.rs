@@ -134,11 +134,7 @@ fn part_2(lines: &[String]) -> Point {
     map.let_memory_fall(&mut falling_memory, 1024);
 
     let shortest_path = map.find_shortest_path().unwrap();
-    let mut path_points: HashSet<Point> = HashSet::with_capacity(shortest_path.len());
-
-    for point in shortest_path {
-        path_points.insert(point);
-    }
+    let mut path_points: HashSet<Point> = HashSet::from_iter(shortest_path);
 
     loop {
         let last_point = *falling_memory.last().unwrap();
@@ -149,10 +145,7 @@ fn part_2(lines: &[String]) -> Point {
 
         match map.find_shortest_path() {
             Some(new_shortest_path) => {
-                path_points = HashSet::with_capacity(new_shortest_path.len());
-                for point in new_shortest_path {
-                    path_points.insert(point);
-                }
+                path_points = HashSet::from_iter(new_shortest_path);
             }
             None => return last_point,
         }
