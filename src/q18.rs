@@ -1,5 +1,5 @@
 use pathfinding::prelude::bfs;
-use std::time::Instant;
+use std::{collections::HashSet, hash::Hash, time::Instant};
 
 const ALL_DIRECTIONS: [Direction; 4] = [
     Direction::Up,
@@ -133,11 +133,28 @@ fn part_2(lines: &[String]) -> Point {
 
     map.let_memory_fall(&mut falling_memory, 1024);
 
+    let shortest_path = map.find_shortest_path().unwrap();
+    let mut path_points: HashSet<Point> = HashSet::with_capacity(shortest_path.len());
+
+    for point in shortest_path {
+        path_points.insert(point);
+    }
+
     loop {
         let last_point = *falling_memory.last().unwrap();
         map.let_memory_fall(&mut falling_memory, 1);
-        if map.find_shortest_path().is_none() {
-            return last_point;
+        if !path_points.contains(&last_point) {
+            continue;
+        }
+
+        match map.find_shortest_path() {
+            Some(new_shortest_path) => {
+                path_points = HashSet::with_capacity(new_shortest_path.len());
+                for point in new_shortest_path {
+                    path_points.insert(point);
+                }
+            }
+            None => return last_point,
         }
     }
 }
