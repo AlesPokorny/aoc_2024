@@ -1,4 +1,4 @@
-use pathfinding::prelude::bfs;
+use pathfinding::prelude::{bfs, dfs};
 use std::{collections::HashSet, hash::Hash, time::Instant};
 
 const ALL_DIRECTIONS: [Direction; 4] = [
@@ -93,6 +93,14 @@ impl Map {
             |&point| Point::new(self.size, self.size) == point,
         )
     }
+
+    fn find_possible_path(&self) -> Option<Vec<Point>> {
+        dfs(
+            Point::new(0, 0),
+            |point| self.get_safe_neighbors(point),
+            |&point| Point::new(self.size, self.size) == point,
+        )
+    }
 }
 
 fn parse_data(lines: &[String]) -> Vec<Point> {
@@ -143,7 +151,7 @@ fn part_2(lines: &[String]) -> Point {
             continue;
         }
 
-        match map.find_shortest_path() {
+        match map.find_possible_path() {
             Some(new_shortest_path) => {
                 path_points = HashSet::from_iter(new_shortest_path);
             }
