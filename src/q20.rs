@@ -1,4 +1,4 @@
-use std::{hash::Hash, time::Instant};
+use std::time::Instant;
 
 const ALL_DIRECTIONS: [Direction; 4] = [
     Direction::Up,
@@ -7,7 +7,7 @@ const ALL_DIRECTIONS: [Direction; 4] = [
     Direction::Left,
 ];
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Point {
     x: usize,
     y: usize,
